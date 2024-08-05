@@ -23,14 +23,31 @@ enum Color {
     White,
 }
 
-trait Piece {
+trait Behavior {
     const BLACK_SPRITE_POSITION: (u8, u8);
     const WHITE_SPRITE_POSITION: (u8, u8);
 
     const BLACK_BOARD_POSITION: &'static [(u8, u8)];
     const WHITE_BOARD_POSITION: &'static [(u8, u8)];
 
-    fn new(position: (u8, u8), color: Color) -> Self;
+    fn new() -> Self;
+}
+
+#[derive(Component)]
+struct Piece<T: Behavior + Send + Sync> {
+    position: (u8, u8),
+    color: Color,
+    behavior: T,
+}
+
+impl<T: Behavior + Send + Sync> Piece<T> {
+    fn new(position: (u8, u8), color: Color) -> Piece<T> {
+        Piece {
+            position,
+            color,
+            behavior: T::new(),
+        }
+    }
 }
 
 pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
@@ -44,7 +61,10 @@ pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
     spawn_piece::<Pawn>(&mut commands, texture);
 }
 
-fn spawn_piece<T: Piece + Component>(commands: &mut Commands, texture: Handle<Image>) {
+fn spawn_piece<T: Behavior + Send + Sync + 'static>(
+    commands: &mut Commands,
+    texture: Handle<Image>,
+) {
     let black_sprite = get_sprite_by_index(T::BLACK_SPRITE_POSITION.0, T::BLACK_SPRITE_POSITION.1);
     let white_sprite = get_sprite_by_index(T::WHITE_SPRITE_POSITION.0, T::WHITE_SPRITE_POSITION.1);
 
@@ -64,7 +84,7 @@ fn spawn_piece<T: Piece + Component>(commands: &mut Commands, texture: Handle<Im
                 },
                 ..default()
             },
-            T::new((*x, *y), Color::Black),
+            Piece::<T>::new((*x, *y), Color::Black),
         ));
     }
 
@@ -84,7 +104,7 @@ fn spawn_piece<T: Piece + Component>(commands: &mut Commands, texture: Handle<Im
                 },
                 ..default()
             },
-            T::new((*x, *y), Color::White),
+            Piece::<T>::new((*x, *y), Color::White),
         ));
     }
 }

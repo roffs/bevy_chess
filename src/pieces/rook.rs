@@ -1,20 +1,15 @@
-use super::{Color, Piece};
-use bevy::prelude::*;
+use super::Behavior;
 
-#[derive(Component)]
-pub struct Rook {
-    position: (u8, u8),
-    color: Color,
-}
+pub struct Rook;
 
-impl Piece for Rook {
+impl Behavior for Rook {
     const BLACK_SPRITE_POSITION: (u8, u8) = (4, 0);
     const WHITE_SPRITE_POSITION: (u8, u8) = (4, 1);
 
     const BLACK_BOARD_POSITION: &'static [(u8, u8)] = &[(0, 0), (7, 0)];
     const WHITE_BOARD_POSITION: &'static [(u8, u8)] = &[(0, 7), (7, 7)];
 
-    fn new(position: (u8, u8), color: Color) -> Rook {
-        Rook { position, color }
+    fn new() -> Self {
+        Self
     }
 }

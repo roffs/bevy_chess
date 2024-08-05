@@ -1,13 +1,8 @@
-use super::{Color, Piece};
-use bevy::prelude::*;
+use super::Behavior;
 
-#[derive(Component)]
-pub struct Pawn {
-    position: (u8, u8),
-    color: Color,
-}
+pub struct Pawn;
 
-impl Piece for Pawn {
+impl Behavior for Pawn {
     const BLACK_SPRITE_POSITION: (u8, u8) = (5, 0);
     const WHITE_SPRITE_POSITION: (u8, u8) = (5, 1);
 
@@ -16,7 +11,7 @@ impl Piece for Pawn {
     #[rustfmt::skip]
     const WHITE_BOARD_POSITION: &'static [(u8, u8)] = &[(0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)];
 
-    fn new(position: (u8, u8), color: Color) -> Pawn {
-        Pawn { position, color }
+    fn new() -> Self {
+        Self
     }
 }
