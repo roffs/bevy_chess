@@ -1,6 +1,6 @@
 use bevy::{input::mouse::MouseMotion, prelude::*, window::PrimaryWindow};
 
-use crate::pieces::Piece;
+use crate::{board::get_position_by_index, pieces::Piece};
 
 #[derive(Component)]
 pub struct Selected;
@@ -39,10 +39,20 @@ pub fn move_piece(
 pub fn release_piece(
     mut commands: Commands,
     buttons: Res<ButtonInput<MouseButton>>,
-    piece_query: Query<Entity, (With<Piece>, With<Selected>)>,
+    mut piece_query: Query<(Entity, &mut Transform), With<Selected>>,
+    windows_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     if buttons.just_released(MouseButton::Left) {
-        if let Ok(entity) = piece_query.get_single() {
+        if let Ok((entity, mut transform)) = piece_query.get_single_mut() {
+            if let Some(position) = windows_query.single().cursor_position() {
+                let x = (position.x / 100.0) as u8;
+                let y = 7 - (position.y / 100.0) as u8;
+
+                let pos = get_position_by_index(x, y);
+
+                transform.translation.x = pos.0;
+                transform.translation.y = pos.1;
+            }
             commands.entity(entity).remove::<Selected>();
         }
     }

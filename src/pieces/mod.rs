@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::board::{HALF_TILE, TILE_SIZE};
+use crate::board::{get_position_by_index, HALF_TILE, TILE_SIZE};
 
 const SPRITE_SIZE: f32 = 480.0;
 
@@ -100,13 +100,11 @@ fn spawn_piece(commands: &mut Commands, texture: Handle<Image>, kind: Kind) {
     }
 
     for (x, y) in b_positions {
+        let pos = get_position_by_index(*x, *y);
+
         commands.spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(
-                    (*x as f32) * TILE_SIZE + HALF_TILE,
-                    (*y as f32) * TILE_SIZE + HALF_TILE,
-                    1.,
-                ),
+                transform: Transform::from_xyz(pos.0, pos.1, 1.),
                 texture: texture.clone(),
                 sprite: Sprite {
                     custom_size: Some(Vec2::new(100.0, 100.0)),
