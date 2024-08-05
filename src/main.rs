@@ -1,8 +1,10 @@
 mod board;
+mod input;
 mod pieces;
 
 use bevy::{prelude::*, window::WindowResolution};
 use board::setup_board;
+use input::mouse_input;
 use pieces::spawn_pieces;
 
 fn main() {
@@ -16,6 +18,7 @@ fn main() {
             ..default()
         }))
         .add_systems(Startup, (setup_camera, setup_board, spawn_pieces))
+        .add_systems(Update, mouse_input)
         .run();
 }
 

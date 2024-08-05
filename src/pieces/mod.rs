@@ -1,94 +1,81 @@
-mod bishop;
-mod king;
-mod knight;
-mod pawn;
-mod queen;
-mod rook;
-
 use bevy::prelude::*;
-use bishop::Bishop;
-use king::King;
-use knight::Knight;
-use pawn::Pawn;
-use queen::Queen;
-use rook::Rook;
 
 use crate::board::{HALF_TILE, TILE_SIZE};
 
 const SPRITE_SIZE: f32 = 480.0;
 
-#[derive(Component, Clone)]
-enum Color {
+#[derive(Component, Clone, Debug)]
+pub enum Color {
     Black,
     White,
 }
 
-trait Behavior {
-    const BLACK_SPRITE_POSITION: (u8, u8);
-    const WHITE_SPRITE_POSITION: (u8, u8);
+#[derive(Clone, Debug)]
+pub enum Kind {
+    King,
+    Queen,
+    Bishop,
+    Knight,
+    Rook,
+    Pawn,
+}
 
-    const BLACK_BOARD_POSITION: &'static [(u8, u8)];
-    const WHITE_BOARD_POSITION: &'static [(u8, u8)];
+impl Kind {
+    fn get_sprite_indices(&self) -> ((u8, u8), (u8, u8)) {
+        match self {
+            Kind::King => ((0, 0), (0, 1)),
+            Kind::Queen => ((1, 0), (1, 1)),
+            Kind::Bishop => ((2, 0), (2, 1)),
+            Kind::Knight => ((3, 0), (3, 1)),
+            Kind::Rook => ((4, 0), (4, 1)),
+            Kind::Pawn => ((5, 0), (5, 1)),
+        }
+    }
 
-    fn new() -> Self;
+    #[allow(clippy::type_complexity)]
+    fn get_initial_board_position_indices(&self) -> (&[(u8, u8)], &[(u8, u8)]) {
+        match self {
+            Kind::King => (&[(4, 0)], &[(4, 7)]),
+            Kind::Queen => (&[(3, 0)], &[(3, 7)]),
+            Kind::Bishop => (&[(2, 0), (5, 0)], &[(2, 7), (5, 7)]),
+            Kind::Knight => (&[(1, 0), (6, 0)], &[(1, 7), (6, 7)]),
+            Kind::Rook => (&[(0, 0), (7, 0)], &[(0, 7), (7, 7)]),
+            #[rustfmt::skip]
+            Kind::Pawn => (
+                &[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)],
+                 &[(0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
+            ),
+        }
+    }
 }
 
 #[derive(Component)]
-struct Piece<T: Behavior + Send + Sync> {
-    position: (u8, u8),
-    color: Color,
-    behavior: T,
-}
-
-impl<T: Behavior + Send + Sync> Piece<T> {
-    fn new(position: (u8, u8), color: Color) -> Piece<T> {
-        Piece {
-            position,
-            color,
-            behavior: T::new(),
-        }
-    }
+pub struct Piece {
+    pub position: (u8, u8),
+    pub color: Color,
+    pub kind: Kind,
 }
 
 pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
     let texture = server.load("sprites/pieces.png");
 
-    spawn_piece::<King>(&mut commands, texture.clone());
-    spawn_piece::<Queen>(&mut commands, texture.clone());
-    spawn_piece::<Bishop>(&mut commands, texture.clone());
-    spawn_piece::<Knight>(&mut commands, texture.clone());
-    spawn_piece::<Rook>(&mut commands, texture.clone());
-    spawn_piece::<Pawn>(&mut commands, texture);
+    spawn_piece(&mut commands, texture.clone(), Kind::King);
+    spawn_piece(&mut commands, texture.clone(), Kind::Queen);
+    spawn_piece(&mut commands, texture.clone(), Kind::Bishop);
+    spawn_piece(&mut commands, texture.clone(), Kind::Knight);
+    spawn_piece(&mut commands, texture.clone(), Kind::Rook);
+    spawn_piece(&mut commands, texture.clone(), Kind::Pawn);
 }
 
-fn spawn_piece<T: Behavior + Send + Sync + 'static>(
-    commands: &mut Commands,
-    texture: Handle<Image>,
-) {
-    let black_sprite = get_sprite_by_index(T::BLACK_SPRITE_POSITION.0, T::BLACK_SPRITE_POSITION.1);
-    let white_sprite = get_sprite_by_index(T::WHITE_SPRITE_POSITION.0, T::WHITE_SPRITE_POSITION.1);
+fn spawn_piece(commands: &mut Commands, texture: Handle<Image>, kind: Kind) {
+    let (w_sprite_index, b_sprite_index) = kind.get_sprite_indices();
 
-    for (x, y) in T::BLACK_BOARD_POSITION {
-        commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(
-                    (*x as f32) * TILE_SIZE + HALF_TILE,
-                    (*y as f32) * TILE_SIZE + HALF_TILE,
-                    1.,
-                ),
-                texture: texture.clone(),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::new(100.0, 100.0)),
-                    rect: Some(black_sprite),
-                    ..default()
-                },
-                ..default()
-            },
-            Piece::<T>::new((*x, *y), Color::Black),
-        ));
-    }
+    let white_sprite = get_sprite_by_index(w_sprite_index.0, w_sprite_index.1);
+    let black_sprite = get_sprite_by_index(b_sprite_index.0, b_sprite_index.1);
 
-    for (x, y) in T::WHITE_BOARD_POSITION {
+    let (w_positions, b_positions) = kind.get_initial_board_position_indices();
+
+    for (x, y) in w_positions {
         commands.spawn((
             SpriteBundle {
                 transform: Transform::from_xyz(
@@ -104,7 +91,35 @@ fn spawn_piece<T: Behavior + Send + Sync + 'static>(
                 },
                 ..default()
             },
-            Piece::<T>::new((*x, *y), Color::White),
+            Piece {
+                position: (*x, *y),
+                color: Color::White,
+                kind: kind.clone(),
+            },
+        ));
+    }
+
+    for (x, y) in b_positions {
+        commands.spawn((
+            SpriteBundle {
+                transform: Transform::from_xyz(
+                    (*x as f32) * TILE_SIZE + HALF_TILE,
+                    (*y as f32) * TILE_SIZE + HALF_TILE,
+                    1.,
+                ),
+                texture: texture.clone(),
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(100.0, 100.0)),
+                    rect: Some(black_sprite),
+                    ..default()
+                },
+                ..default()
+            },
+            Piece {
+                position: (*x, *y),
+                color: Color::Black,
+                kind: kind.clone(),
+            },
         ));
     }
 }
