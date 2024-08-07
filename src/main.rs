@@ -4,7 +4,7 @@ mod pieces;
 
 use bevy::{prelude::*, window::WindowResolution};
 use board::setup_board;
-use input::{move_piece, release_piece, select_piece};
+use input::{move_piece, release_piece, select_piece, set_piece_position};
 use pieces::spawn_pieces;
 
 fn main() {
@@ -18,7 +18,10 @@ fn main() {
             ..default()
         }))
         .add_systems(Startup, (setup_camera, setup_board, spawn_pieces))
-        .add_systems(Update, (select_piece, move_piece, release_piece))
+        .add_systems(
+            Update,
+            (select_piece, move_piece, release_piece, set_piece_position),
+        )
         .run();
 }
 

@@ -54,7 +54,7 @@ pub fn setup_board(
     }
 }
 
-pub fn get_position_by_index(x: u8, y: u8) -> (f32, f32) {
+pub fn get_position_by_index(x: i8, y: i8) -> (f32, f32) {
     (
         (x as f32) * TILE_SIZE + HALF_TILE,
         (y as f32) * TILE_SIZE + HALF_TILE,
