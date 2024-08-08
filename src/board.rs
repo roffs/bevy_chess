@@ -54,9 +54,16 @@ pub fn setup_board(
     }
 }
 
-pub fn get_position_by_index(x: i8, y: i8) -> (f32, f32) {
-    (
-        (x as f32) * TILE_SIZE + HALF_TILE,
-        (y as f32) * TILE_SIZE + HALF_TILE,
+pub fn get_pixels_by_pos(pos: IVec2) -> Vec2 {
+    Vec2::new(
+        (pos.x as f32) * TILE_SIZE + HALF_TILE,
+        (pos.y as f32) * TILE_SIZE + HALF_TILE,
     )
+}
+
+pub fn get_pos_from_pixel(pixel_pos: Vec2) -> IVec2 {
+    let x = (pixel_pos.x / 100.0) as i32;
+    let y = 7 - (pixel_pos.y / 100.0) as i32;
+
+    IVec2::new(x, y)
 }

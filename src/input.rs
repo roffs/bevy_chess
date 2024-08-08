@@ -1,6 +1,9 @@
 use bevy::{input::mouse::MouseMotion, prelude::*, window::PrimaryWindow};
 
-use crate::{board::get_position_by_index, pieces::Piece};
+use crate::{
+    board::{get_pixels_by_pos, get_pos_from_pixel},
+    pieces::Piece,
+};
 
 #[derive(Component)]
 pub struct Selected;
@@ -12,11 +15,10 @@ pub fn select_piece(
     windows_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     if buttons.just_pressed(MouseButton::Left) {
-        if let Some(position) = windows_query.single().cursor_position() {
-            let x = (position.x / 100.0) as i8;
-            let y = 7 - (position.y / 100.0) as i8;
+        if let Some(mouse_pos) = windows_query.single().cursor_position() {
+            let new_position = get_pos_from_pixel(mouse_pos);
             for (entity, piece) in &pieces_query {
-                if piece.position == (x, y) {
+                if piece.position == new_position {
                     commands.entity(entity).insert(Selected);
                 }
             }
@@ -46,28 +48,23 @@ pub fn release_piece(
 ) {
     if buttons.just_released(MouseButton::Left) {
         if let Ok((entity, mut piece)) = selected_piece_query.get_single_mut() {
-            if let Some(position) = windows_query.single().cursor_position() {
-                let x = (position.x / 100.0) as i8;
-                let y = 7 - (position.y / 100.0) as i8;
-
-                let target_position = (x, y);
+            if let Some(mouse_pos) = windows_query.single().cursor_position() {
+                let target_pos = get_pos_from_pixel(mouse_pos);
 
                 // Get all valid movements for the selected piece
                 let valid_moves =
                     piece.get_valid_moves(pieces_query.iter().map(|(_, p)| p).collect());
 
                 // Check if move is one from the valid ones
-                let move_is_valid = valid_moves
-                    .iter()
-                    .any(|valid_pos| valid_pos == &target_position);
+                let move_is_valid = valid_moves.iter().any(|valid_pos| valid_pos == &target_pos);
 
                 if move_is_valid {
-                    piece.position = target_position;
+                    piece.position = target_pos;
 
                     // Despawn piece if there is any in a valid spot
                     if let Some((target_entity, _)) = pieces_query
                         .iter()
-                        .find(|(_, piece)| piece.position == target_position)
+                        .find(|(_, piece)| piece.position == target_pos)
                     {
                         commands.entity(target_entity).despawn();
                     }
@@ -84,9 +81,9 @@ pub fn set_piece_position(
 ) {
     for entity in removed.read() {
         if let Ok((piece, mut transform)) = query.get_mut(entity) {
-            let pos = get_position_by_index(piece.position.0, piece.position.1);
-            transform.translation.x = pos.0;
-            transform.translation.y = pos.1;
+            let pos = get_pixels_by_pos(piece.position);
+            transform.translation.x = pos.x;
+            transform.translation.y = pos.y;
             transform.translation.z = 1.0;
         }
     }

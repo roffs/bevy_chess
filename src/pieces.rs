@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::board::{get_position_by_index, HALF_TILE, TILE_SIZE};
+use crate::board::get_pixels_by_pos;
 
 const SPRITE_SIZE: f32 = 480.0;
 
@@ -33,17 +33,44 @@ impl Kind {
     }
 
     #[allow(clippy::type_complexity)]
-    fn get_initial_board_position_indices(&self) -> (&[(i8, i8)], &[(i8, i8)]) {
+    fn get_initial_board_position_indices(&self) -> (Vec<IVec2>, Vec<IVec2>) {
         match self {
-            Kind::King => (&[(4, 0)], &[(4, 7)]),
-            Kind::Queen => (&[(3, 0)], &[(3, 7)]),
-            Kind::Bishop => (&[(2, 0), (5, 0)], &[(2, 7), (5, 7)]),
-            Kind::Knight => (&[(1, 0), (6, 0)], &[(1, 7), (6, 7)]),
-            Kind::Rook => (&[(0, 0), (7, 0)], &[(0, 7), (7, 7)]),
-            #[rustfmt::skip]
+            Kind::King => (vec![IVec2::new(4, 0)], vec![IVec2::new(4, 7)]),
+            Kind::Queen => (vec![IVec2::new(3, 0)], vec![IVec2::new(3, 7)]),
+            Kind::Bishop => (
+                vec![IVec2::new(2, 0), IVec2::new(5, 0)],
+                vec![IVec2::new(2, 7), IVec2::new(5, 7)],
+            ),
+            Kind::Knight => (
+                vec![IVec2::new(1, 0), IVec2::new(6, 0)],
+                vec![IVec2::new(1, 7), IVec2::new(6, 7)],
+            ),
+            Kind::Rook => (
+                vec![IVec2::new(0, 0), IVec2::new(7, 0)],
+                vec![IVec2::new(0, 7), IVec2::new(7, 7)],
+            ),
+            // #[rustfmt::skip]
             Kind::Pawn => (
-                &[(0, 1), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 1), (7, 1)],
-                 &[(0, 6), (1, 6), (2, 6), (3, 6), (4, 6), (5, 6), (6, 6), (7, 6)]
+                vec![
+                    IVec2::new(0, 1),
+                    IVec2::new(1, 1),
+                    IVec2::new(2, 1),
+                    IVec2::new(3, 1),
+                    IVec2::new(4, 1),
+                    IVec2::new(5, 1),
+                    IVec2::new(6, 1),
+                    IVec2::new(7, 1),
+                ],
+                vec![
+                    IVec2::new(0, 6),
+                    IVec2::new(1, 6),
+                    IVec2::new(2, 6),
+                    IVec2::new(3, 6),
+                    IVec2::new(4, 6),
+                    IVec2::new(5, 6),
+                    IVec2::new(6, 6),
+                    IVec2::new(7, 6),
+                ],
             ),
         }
     }
@@ -51,36 +78,33 @@ impl Kind {
 
 #[derive(Component, Debug)]
 pub struct Piece {
-    pub position: (i8, i8),
+    pub position: IVec2,
     pub color: Color,
     pub kind: Kind,
 }
 
 impl Piece {
-    pub fn get_valid_moves(&self, pieces_on_board: Vec<&Piece>) -> Vec<(i8, i8)> {
+    pub fn get_valid_moves(&self, pieces_on_board: Vec<&Piece>) -> Vec<IVec2> {
         let current_position = self.position;
-        let mut valid_moves: Vec<(i8, i8)> = vec![];
+        let mut valid_moves: Vec<IVec2> = vec![];
 
         match self.kind {
             Kind::King => {
                 let king_moves = [
-                    (0, 1),
-                    (1, 1),
-                    (1, 0),
-                    (1, -1),
-                    (1, -1),
-                    (0, -1),
-                    (-1, -1),
-                    (-1, 0),
-                    (-1, 1),
+                    IVec2::new(0, 1),
+                    IVec2::new(1, 1),
+                    IVec2::new(1, 0),
+                    IVec2::new(1, -1),
+                    IVec2::new(1, -1),
+                    IVec2::new(0, -1),
+                    IVec2::new(-1, -1),
+                    IVec2::new(-1, 0),
+                    IVec2::new(-1, 1),
                 ];
 
                 for movement in king_moves {
-                    let new_position = (
-                        current_position.0 + movement.0,
-                        current_position.1 + movement.1,
-                    );
-                    if (0..8).contains(&new_position.0) && (0..8).contains(&new_position.1) {
+                    let new_position = current_position + movement;
+                    if (0..8).contains(&new_position.x) && (0..8).contains(&new_position.y) {
                         let target_piece = pieces_on_board
                             .iter()
                             .find(|piece| piece.position == new_position);
@@ -97,14 +121,14 @@ impl Piece {
             }
             Kind::Queen => {
                 let directions = [
-                    (1, 0),
-                    (-1, 0),
-                    (0, 1),
-                    (0, -1),
-                    (1, 1),
-                    (-1, 1),
-                    (1, -1),
-                    (-1, -1),
+                    IVec2::new(1, 0),
+                    IVec2::new(-1, 0),
+                    IVec2::new(0, 1),
+                    IVec2::new(0, -1),
+                    IVec2::new(1, 1),
+                    IVec2::new(-1, 1),
+                    IVec2::new(1, -1),
+                    IVec2::new(-1, -1),
                 ];
 
                 for direction in directions {
@@ -118,7 +142,12 @@ impl Piece {
                 }
             }
             Kind::Bishop => {
-                let directions = [(1, 1), (-1, 1), (1, -1), (-1, -1)];
+                let directions = [
+                    IVec2::new(1, 1),
+                    IVec2::new(-1, 1),
+                    IVec2::new(1, -1),
+                    IVec2::new(-1, -1),
+                ];
 
                 for direction in directions {
                     add_moves_in_direction(
@@ -132,22 +161,19 @@ impl Piece {
             }
             Kind::Knight => {
                 let knight_moves = [
-                    (-2, 1),
-                    (-1, 2),
-                    (1, 2),
-                    (2, 1),
-                    (2, -1),
-                    (1, -2),
-                    (-1, -2),
-                    (-2, -1),
+                    IVec2::new(-2, 1),
+                    IVec2::new(-1, 2),
+                    IVec2::new(1, 2),
+                    IVec2::new(2, 1),
+                    IVec2::new(2, -1),
+                    IVec2::new(1, -2),
+                    IVec2::new(-1, -2),
+                    IVec2::new(-2, -1),
                 ];
 
                 for movement in knight_moves {
-                    let new_position = (
-                        current_position.0 + movement.0,
-                        current_position.1 + movement.1,
-                    );
-                    if (0..8).contains(&new_position.0) && (0..8).contains(&new_position.1) {
+                    let new_position = current_position + movement;
+                    if (0..8).contains(&new_position.x) && (0..8).contains(&new_position.y) {
                         let target_piece = pieces_on_board
                             .iter()
                             .find(|piece| piece.position == new_position);
@@ -163,7 +189,12 @@ impl Piece {
                 }
             }
             Kind::Rook => {
-                let directions = [(1, 0), (-1, 0), (0, 1), (0, -1)];
+                let directions = [
+                    IVec2::new(1, 0),
+                    IVec2::new(-1, 0),
+                    IVec2::new(0, 1),
+                    IVec2::new(0, -1),
+                ];
                 for direction in directions {
                     add_moves_in_direction(
                         current_position,
@@ -181,7 +212,7 @@ impl Piece {
                 };
 
                 // Check if it can advance
-                let new_position = (current_position.0, current_position.1 + y);
+                let new_position = IVec2::new(current_position.x, current_position.y + y);
                 let target_piece = pieces_on_board
                     .iter()
                     .find(|piece| piece.position == new_position);
@@ -190,10 +221,10 @@ impl Piece {
                     valid_moves.push(new_position);
 
                     // Move two squares if first pawn move
-                    if (self.color == Color::Black && self.position.1 == 6)
-                        || (self.color == Color::White && self.position.1 == 1)
+                    if (self.color == Color::Black && self.position.y == 6)
+                        || (self.color == Color::White && self.position.y == 1)
                     {
-                        let new_position = (new_position.0, new_position.1 + y);
+                        let new_position = IVec2::new(new_position.x, new_position.y + y);
                         let target_piece = pieces_on_board
                             .iter()
                             .find(|piece| piece.position == new_position);
@@ -205,7 +236,7 @@ impl Piece {
 
                 // Check if it can capture a piece
                 for x in [-1, 1] {
-                    let new_position = (current_position.0 + x, current_position.1 + y);
+                    let new_position = IVec2::new(current_position.x + x, current_position.y + y);
 
                     let target_piece = pieces_on_board
                         .iter()
@@ -243,14 +274,11 @@ fn spawn_piece(commands: &mut Commands, texture: Handle<Image>, kind: Kind) {
 
     let (w_positions, b_positions) = kind.get_initial_board_position_indices();
 
-    for (x, y) in w_positions {
+    for position in w_positions {
+        let pixel_pos = get_pixels_by_pos(position);
         commands.spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(
-                    (*x as f32) * TILE_SIZE + HALF_TILE,
-                    (*y as f32) * TILE_SIZE + HALF_TILE,
-                    1.,
-                ),
+                transform: Transform::from_xyz(pixel_pos.x, pixel_pos.y, 1.),
                 texture: texture.clone(),
                 sprite: Sprite {
                     custom_size: Some(Vec2::new(100.0, 100.0)),
@@ -260,19 +288,19 @@ fn spawn_piece(commands: &mut Commands, texture: Handle<Image>, kind: Kind) {
                 ..default()
             },
             Piece {
-                position: (*x, *y),
+                position,
                 color: Color::White,
                 kind: kind.clone(),
             },
         ));
     }
 
-    for (x, y) in b_positions {
-        let pos = get_position_by_index(*x, *y);
+    for position in b_positions {
+        let pixel_pos = get_pixels_by_pos(position);
 
         commands.spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(pos.0, pos.1, 1.),
+                transform: Transform::from_xyz(pixel_pos.x, pixel_pos.y, 1.),
                 texture: texture.clone(),
                 sprite: Sprite {
                     custom_size: Some(Vec2::new(100.0, 100.0)),
@@ -282,7 +310,7 @@ fn spawn_piece(commands: &mut Commands, texture: Handle<Image>, kind: Kind) {
                 ..default()
             },
             Piece {
-                position: (*x, *y),
+                position,
                 color: Color::Black,
                 kind: kind.clone(),
             },
@@ -304,16 +332,14 @@ fn get_sprite_by_index(xi: i8, yi: i8) -> Rect {
 }
 
 fn add_moves_in_direction(
-    current_position: (i8, i8),
-    direction_step: (i8, i8),
+    current_position: IVec2,
+    direction: IVec2,
     color: &Color,
     pieces_on_board: &[&Piece],
-    valid_moves: &mut Vec<(i8, i8)>,
+    valid_moves: &mut Vec<IVec2>,
 ) {
-    let (mut xi, mut yi) = (0, 0);
-    while (0..8).contains(&(current_position.0 + xi)) && (0..8).contains(&(current_position.1 + yi))
-    {
-        let new_position = (current_position.0 + xi, current_position.1 + yi);
+    let mut new_position = current_position + direction;
+    while (0..8).contains(&(new_position.x)) && (0..8).contains(&new_position.y) {
         let target_piece = pieces_on_board
             .iter()
             .find(|piece| piece.position == new_position);
@@ -326,7 +352,6 @@ fn add_moves_in_direction(
         }
         valid_moves.push(new_position);
 
-        xi += direction_step.0;
-        yi += direction_step.1;
+        new_position += direction;
     }
 }
