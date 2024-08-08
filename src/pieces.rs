@@ -109,11 +109,7 @@ impl Piece {
                             .iter()
                             .find(|piece| piece.position == new_position);
 
-                        if let Some(piece) = target_piece {
-                            if self.color != piece.color {
-                                valid_moves.push(new_position);
-                            }
-                        } else {
+                        if target_piece.map_or(true, |p| p.color != self.color) {
                             valid_moves.push(new_position);
                         }
                     }
@@ -178,11 +174,7 @@ impl Piece {
                             .iter()
                             .find(|piece| piece.position == new_position);
 
-                        if let Some(piece) = target_piece {
-                            if self.color != piece.color {
-                                valid_moves.push(new_position);
-                            }
-                        } else {
+                        if target_piece.map_or(true, |p| p.color != self.color) {
                             valid_moves.push(new_position);
                         }
                     }
@@ -206,13 +198,13 @@ impl Piece {
                 }
             }
             Kind::Pawn => {
-                let y = match self.color == Color::White {
-                    true => 1,
-                    false => -1,
+                let vertical_move = match self.color == Color::White {
+                    true => IVec2::new(0, 1),
+                    false => IVec2::new(0, -1),
                 };
 
                 // Check if it can advance
-                let new_position = IVec2::new(current_position.x, current_position.y + y);
+                let new_position = current_position + vertical_move;
                 let target_piece = pieces_on_board
                     .iter()
                     .find(|piece| piece.position == new_position);
@@ -220,11 +212,11 @@ impl Piece {
                 if target_piece.is_none() {
                     valid_moves.push(new_position);
 
-                    // Move two squares if first pawn move
+                    // Check if it can advance an extra tile if first pawn move
                     if (self.color == Color::Black && self.position.y == 6)
                         || (self.color == Color::White && self.position.y == 1)
                     {
-                        let new_position = IVec2::new(new_position.x, new_position.y + y);
+                        let new_position = new_position + vertical_move;
                         let target_piece = pieces_on_board
                             .iter()
                             .find(|piece| piece.position == new_position);
@@ -235,17 +227,14 @@ impl Piece {
                 }
 
                 // Check if it can capture a piece
-                for x in [-1, 1] {
-                    let new_position = IVec2::new(current_position.x + x, current_position.y + y);
-
+                for horizontal_move in [IVec2::new(-1, 0), IVec2::new(1, 0)] {
+                    let new_position = current_position + vertical_move + horizontal_move;
                     let target_piece = pieces_on_board
                         .iter()
                         .find(|piece| piece.position == new_position);
 
-                    if let Some(piece) = target_piece {
-                        if self.color != piece.color {
-                            valid_moves.push(new_position);
-                        }
+                    if target_piece.is_some_and(|p| p.color != self.color) {
+                        valid_moves.push(new_position);
                     }
                 }
             }
