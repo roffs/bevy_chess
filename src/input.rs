@@ -6,6 +6,9 @@ use crate::{
 };
 
 #[derive(Component)]
+pub struct ValidMoves(Vec<IVec2>);
+
+#[derive(Component)]
 pub struct Selected;
 
 pub fn select_piece(
@@ -19,7 +22,12 @@ pub fn select_piece(
             let new_position = get_pos_from_pixel(mouse_pos);
             for (entity, piece) in &pieces_query {
                 if piece.position == new_position {
-                    commands.entity(entity).insert(Selected);
+                    let valid_moves =
+                        piece.get_valid_moves(pieces_query.iter().map(|(_, p)| p).collect());
+
+                    commands
+                        .entity(entity)
+                        .insert((Selected, ValidMoves(valid_moves)));
                 }
             }
         }
@@ -42,21 +50,20 @@ pub fn move_piece(
 pub fn release_piece(
     mut commands: Commands,
     buttons: Res<ButtonInput<MouseButton>>,
-    mut selected_piece_query: Query<(Entity, &mut Piece), With<Selected>>,
+    mut selected_piece_query: Query<(Entity, &mut Piece, &ValidMoves), With<Selected>>,
     pieces_query: Query<(Entity, &Piece), Without<Selected>>,
     windows_query: Query<&Window, With<PrimaryWindow>>,
 ) {
     if buttons.just_released(MouseButton::Left) {
-        if let Ok((entity, mut piece)) = selected_piece_query.get_single_mut() {
+        if let Ok((entity, mut piece, valid_moves)) = selected_piece_query.get_single_mut() {
             if let Some(mouse_pos) = windows_query.single().cursor_position() {
                 let target_pos = get_pos_from_pixel(mouse_pos);
 
-                // Get all valid movements for the selected piece
-                let valid_moves =
-                    piece.get_valid_moves(pieces_query.iter().map(|(_, p)| p).collect());
-
                 // Check if move is one from the valid ones
-                let move_is_valid = valid_moves.iter().any(|valid_pos| valid_pos == &target_pos);
+                let move_is_valid = valid_moves
+                    .0
+                    .iter()
+                    .any(|valid_pos| valid_pos == &target_pos);
 
                 if move_is_valid {
                     piece.position = target_pos;
@@ -69,7 +76,7 @@ pub fn release_piece(
                         commands.entity(target_entity).despawn();
                     }
                 }
-                commands.entity(entity).remove::<Selected>();
+                commands.entity(entity).remove::<(Selected, ValidMoves)>();
             }
         }
     }
