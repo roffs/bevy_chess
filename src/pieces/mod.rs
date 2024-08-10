@@ -18,7 +18,7 @@ use crate::board::get_pixels_by_pos;
 
 const SPRITE_SIZE: f32 = 480.0;
 
-#[derive(Component, Clone, Debug, PartialEq, Eq)]
+#[derive(Resource, Clone, Debug, PartialEq, Eq)]
 pub enum Color {
     Black,
     White,
