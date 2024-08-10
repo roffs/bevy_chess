@@ -1,7 +1,10 @@
-use super::{add_moves_in_direction, get_sprite_by_index, BuildPieceKind, Color, Kind, Piece};
+use super::{
+    utils::{add_moves_in_direction, get_sprite_by_index},
+    BuildPieceKind, Color, Kind, Piece,
+};
 use bevy::prelude::*;
 
-pub struct Bishop;
+pub(super) struct Bishop;
 
 impl Kind for Bishop {
     fn get_valid_moves(

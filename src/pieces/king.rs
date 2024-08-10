@@ -1,7 +1,7 @@
-use super::{get_sprite_by_index, BuildPieceKind, Color, Kind, Piece};
+use super::{utils::get_sprite_by_index, BuildPieceKind, Color, Kind, Piece};
 use bevy::prelude::*;
 
-pub struct King;
+pub(super) struct King;
 
 impl Kind for King {
     fn get_valid_moves(

@@ -4,6 +4,7 @@ mod knight;
 mod pawn;
 mod queen;
 mod rook;
+mod utils;
 
 use bevy::prelude::*;
 use bishop::Bishop;
@@ -58,17 +59,17 @@ impl Piece {
             kind: T::new(),
         }
     }
-}
 
-pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
-    let texture = server.load("sprites/pieces.png");
+    pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
+        let texture = server.load("sprites/pieces.png");
 
-    spawn_piece::<King>(&mut commands, texture.clone());
-    spawn_piece::<Queen>(&mut commands, texture.clone());
-    spawn_piece::<Bishop>(&mut commands, texture.clone());
-    spawn_piece::<Knight>(&mut commands, texture.clone());
-    spawn_piece::<Rook>(&mut commands, texture.clone());
-    spawn_piece::<Pawn>(&mut commands, texture.clone());
+        spawn_piece::<King>(&mut commands, texture.clone());
+        spawn_piece::<Queen>(&mut commands, texture.clone());
+        spawn_piece::<Bishop>(&mut commands, texture.clone());
+        spawn_piece::<Knight>(&mut commands, texture.clone());
+        spawn_piece::<Rook>(&mut commands, texture.clone());
+        spawn_piece::<Pawn>(&mut commands, texture.clone());
+    }
 }
 
 fn spawn_piece<T: BuildPieceKind>(commands: &mut Commands, texture: Handle<Image>) {
@@ -108,43 +109,5 @@ fn spawn_piece<T: BuildPieceKind>(commands: &mut Commands, texture: Handle<Image
             },
             Piece::new::<T>(position, Color::Black),
         ));
-    }
-}
-
-// Get sprite from the texture according to the indexes
-fn get_sprite_by_index(indices: IVec2) -> Rect {
-    let xi = indices.x as f32;
-    let yi = indices.y as f32;
-
-    Rect::new(
-        xi * SPRITE_SIZE,
-        yi * SPRITE_SIZE,
-        (xi + 1.0) * SPRITE_SIZE,
-        (yi + 1.0) * SPRITE_SIZE,
-    )
-}
-
-fn add_moves_in_direction(
-    current_position: IVec2,
-    direction: IVec2,
-    color: &Color,
-    pieces_on_board: &[&Piece],
-    valid_moves: &mut Vec<IVec2>,
-) {
-    let mut new_position = current_position + direction;
-    while (0..8).contains(&(new_position.x)) && (0..8).contains(&new_position.y) {
-        let target_piece = pieces_on_board
-            .iter()
-            .find(|piece| piece.position == new_position);
-
-        if let Some(piece) = target_piece {
-            if color != &piece.color {
-                valid_moves.push(new_position);
-            }
-            break;
-        }
-        valid_moves.push(new_position);
-
-        new_position += direction;
     }
 }

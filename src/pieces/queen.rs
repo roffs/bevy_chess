@@ -1,7 +1,10 @@
-use super::{add_moves_in_direction, get_sprite_by_index, BuildPieceKind, Color, Kind, Piece};
+use super::{
+    utils::{add_moves_in_direction, get_sprite_by_index},
+    BuildPieceKind, Color, Kind, Piece,
+};
 use bevy::prelude::*;
 
-pub struct Queen;
+pub(super) struct Queen;
 
 impl Kind for Queen {
     fn get_valid_moves(
