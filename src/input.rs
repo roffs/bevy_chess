@@ -82,10 +82,7 @@ fn release_piece(
                     }
 
                     // Swap whose turn it is
-                    *color_turn = match *color_turn {
-                        Color::Black => Color::White,
-                        Color::White => Color::Black,
-                    };
+                    (*color_turn).switch();
                 }
                 commands.entity(entity).remove::<Selected>();
             }

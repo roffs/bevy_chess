@@ -24,6 +24,15 @@ pub enum Color {
     White,
 }
 
+impl Color {
+    pub fn switch(&mut self) {
+        *self = match *self {
+            Color::Black => Color::White,
+            Color::White => Color::Black,
+        }
+    }
+}
+
 trait Kind {
     fn get_valid_moves(
         &self,
