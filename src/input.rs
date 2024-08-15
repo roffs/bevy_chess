@@ -1,7 +1,7 @@
-use bevy::{input::mouse::MouseMotion, prelude::*, window::PrimaryWindow};
+use bevy::{prelude::*, window::PrimaryWindow};
 
 use crate::{
-    board::{get_pixels_by_pos, get_pos_from_pixel},
+    board::{get_pixels_by_pos, get_pos_from_pixel, TILE_SIZE},
     pieces::{Color, Piece},
 };
 
@@ -43,12 +43,12 @@ fn select_piece(
 
 fn move_piece(
     mut piece_query: Query<&mut Transform, With<Selected>>,
-    mut mouse_motion: EventReader<MouseMotion>,
+    mut cursore_moved_reader: EventReader<CursorMoved>,
 ) {
     if let Ok(mut transform) = piece_query.get_single_mut() {
-        for event in mouse_motion.read() {
-            transform.translation.x += event.delta.x;
-            transform.translation.y -= event.delta.y;
+        for cursor_moved in cursore_moved_reader.read() {
+            transform.translation.x = cursor_moved.position.x;
+            transform.translation.y = (TILE_SIZE * 8.0) - cursor_moved.position.y;
             transform.translation.z = 2.0;
         }
     }

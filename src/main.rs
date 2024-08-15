@@ -3,7 +3,7 @@ mod input;
 mod pieces;
 
 use bevy::{prelude::*, window::WindowResolution};
-use board::setup_board;
+use board::{setup_board, TILE_SIZE};
 use input::InputPlugin;
 use pieces::Piece;
 
@@ -11,7 +11,7 @@ fn main() {
     App::new()
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
-                resolution: WindowResolution::new(800.0, 800.0),
+                resolution: WindowResolution::new(TILE_SIZE * 8.0, TILE_SIZE * 8.0),
                 resizable: false,
                 ..default()
             }),
