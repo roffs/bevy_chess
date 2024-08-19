@@ -69,54 +69,54 @@ impl Piece {
         }
     }
 
-    pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
-        let texture = server.load("sprites/pieces.png");
+    fn spawn<T: BuildPieceKind>(commands: &mut Commands, texture: Handle<Image>) {
+        let (white_sprite, black_sprite) = T::get_sprites();
+        let (w_positions, b_positions) = T::get_initial_board_position_indices();
 
-        spawn_piece::<King>(&mut commands, texture.clone());
-        spawn_piece::<Queen>(&mut commands, texture.clone());
-        spawn_piece::<Bishop>(&mut commands, texture.clone());
-        spawn_piece::<Knight>(&mut commands, texture.clone());
-        spawn_piece::<Rook>(&mut commands, texture.clone());
-        spawn_piece::<Pawn>(&mut commands, texture.clone());
+        for position in w_positions {
+            let pixel_pos = get_pixels_by_pos(position);
+            commands.spawn((
+                SpriteBundle {
+                    transform: Transform::from_xyz(pixel_pos.x, pixel_pos.y, 1.),
+                    texture: texture.clone(),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(100.0, 100.0)),
+                        rect: Some(white_sprite),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Piece::new::<T>(position, Color::White),
+            ));
+        }
+
+        for position in b_positions {
+            let pixel_pos = get_pixels_by_pos(position);
+
+            commands.spawn((
+                SpriteBundle {
+                    transform: Transform::from_xyz(pixel_pos.x, pixel_pos.y, 1.),
+                    texture: texture.clone(),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(100.0, 100.0)),
+                        rect: Some(black_sprite),
+                        ..default()
+                    },
+                    ..default()
+                },
+                Piece::new::<T>(position, Color::Black),
+            ));
+        }
     }
 }
 
-fn spawn_piece<T: BuildPieceKind>(commands: &mut Commands, texture: Handle<Image>) {
-    let (white_sprite, black_sprite) = T::get_sprites();
-    let (w_positions, b_positions) = T::get_initial_board_position_indices();
+pub fn spawn_pieces(mut commands: Commands, server: Res<AssetServer>) {
+    let texture = server.load("sprites/pieces.png");
 
-    for position in w_positions {
-        let pixel_pos = get_pixels_by_pos(position);
-        commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(pixel_pos.x, pixel_pos.y, 1.),
-                texture: texture.clone(),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::new(100.0, 100.0)),
-                    rect: Some(white_sprite),
-                    ..default()
-                },
-                ..default()
-            },
-            Piece::new::<T>(position, Color::White),
-        ));
-    }
-
-    for position in b_positions {
-        let pixel_pos = get_pixels_by_pos(position);
-
-        commands.spawn((
-            SpriteBundle {
-                transform: Transform::from_xyz(pixel_pos.x, pixel_pos.y, 1.),
-                texture: texture.clone(),
-                sprite: Sprite {
-                    custom_size: Some(Vec2::new(100.0, 100.0)),
-                    rect: Some(black_sprite),
-                    ..default()
-                },
-                ..default()
-            },
-            Piece::new::<T>(position, Color::Black),
-        ));
-    }
+    Piece::spawn::<King>(&mut commands, texture.clone());
+    Piece::spawn::<Queen>(&mut commands, texture.clone());
+    Piece::spawn::<Bishop>(&mut commands, texture.clone());
+    Piece::spawn::<Knight>(&mut commands, texture.clone());
+    Piece::spawn::<Rook>(&mut commands, texture.clone());
+    Piece::spawn::<Pawn>(&mut commands, texture.clone());
 }

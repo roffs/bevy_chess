@@ -5,7 +5,7 @@ mod pieces;
 use bevy::{prelude::*, window::WindowResolution};
 use board::{setup_board, TILE_SIZE};
 use input::InputPlugin;
-use pieces::Piece;
+use pieces::spawn_pieces;
 
 fn main() {
     App::new()
@@ -17,7 +17,7 @@ fn main() {
             }),
             ..default()
         }))
-        .add_systems(Startup, (setup_camera, setup_board, Piece::spawn_pieces))
+        .add_systems(Startup, (setup_camera, setup_board, spawn_pieces))
         .add_plugins(InputPlugin)
         .run();
 }
